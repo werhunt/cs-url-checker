@@ -2,6 +2,7 @@
 
 import re
 import argparse
+
 URL_RE = re.compile(r'https?://[^/]+/(.{4})\b')
 
 
@@ -31,7 +32,7 @@ def cs_return(string):
 
     add dictionary stuff here
     replace print and return string with dic
-    
+
     '''
     if args.print:
         print(string)
@@ -58,7 +59,7 @@ def metatool(url):
         path = oSearch.groups()[0]
         checksumValue, checksumConstant = Checksum8LSB(path)
         if checksumConstant != '':
-            return 'checksum: %s (0x%02x)' % (checksumConstant, checksumValue)
+            return '%s (0x%02x)' % (checksumConstant, checksumValue)
         else:
             return 'checksum not found'
     else:
