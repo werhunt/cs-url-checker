@@ -4,7 +4,7 @@ import re
 import csv
 import sys
 
-URL_RE = re.compile(r'https?://[^/]+/(.{4})\b')
+URL_RE = re.compile(r'https?://[^/]+/(.{4})[^\w{0-9A-Za-z\-\_}]')
 
 
 def Checksum8(data):
