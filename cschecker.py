@@ -2,6 +2,8 @@
 
 import re
 import argparse
+from csv import DictWriter
+import sys
 
 URL_RE = re.compile(r'https?://[^/]+/(.{4})\b')
 
@@ -27,17 +29,24 @@ def Checksum8(data):
     return sum(map(ord, data))
 
 
-def cs_return(string):
+def cs_return(data):
     '''
 
     add dictionary stuff here
     replace print and return string with dic
 
     '''
+    out = sys.stdout
+    dic = {'combined_uri':url, 'parsedcheck':data}
+    writer = DictWriter(out, fieldnames=dic.keys())
+
+
     if args.print:
-        print(string)
+        writer.writeheader()
+        writer.writerow(dic)
+        #print(data)
     else:
-        return string
+        return data
 
 
 def Checksum8LSB(data):
