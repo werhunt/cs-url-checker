@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-import re
 import csv
+import re
 import sys
 
 URL_RE = re.compile(r'https?://[^/]+/(.{4})[^\w{0-9A-Za-z\-\_}]')
@@ -26,7 +26,7 @@ def Checksum8LSB(data):
 
 def metatool():
     if len(sys.argv) != 2:
-        print("Usage pythin metatool.py [uri]")
+        print("Usage python metatool.py [uri]")
         sys.exit(1)
     infile = sys.stdin
     outfile = sys.stdout
