@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 
 import base64
+import binascii
 import csv
 import re
 import sys
+import struct
 import time
 
 
+
 URL_RE = re.compile('(?:https?://[^/]+)?/([^/]+)/?')
+UNDEFINED = 'undefined'
+format = '8sBBBBBBBB'
 
 dArchitectures = {
      0: 'nil',
@@ -75,17 +80,80 @@ dPlatforms = {
     30: 'arista'
   }
 
+def File2Strings(filename):
+    try:
+        if filename == '':
+            f = sys.stdin
+        else:
+            f = open(filename, 'r')
+    except:
+        return None
+    try:
+        return map(lambda line:line.rstrip('\n'), f.readlines())
+    except:
+        return None
+    finally:
+        if f != sys.stdin:
+            f.close()
+
+def ProcessAt(argument):
+    if argument.startswith('@'):
+        strings = File2Strings(argument[1:])
+        if strings == None:
+            raise Exception('Error reading %s' % argument)
+        else:
+            return strings
+    else:
+        return [argument]
+
+# CIC: Call If Callable
+def CIC(expression):
+    if callable(expression):
+        return expression()
+    else:
+        return expression
+
+# IFF: IF Function
+def IFF(expression, valueTrue, valueFalse):
+    if expression:
+        return CIC(valueTrue)
+    else:
+        return CIC(valueFalse)
+
+def FormatTime(epoch=None):
+    if epoch == None:
+        epoch = time.time()
+    return '%04d/%02d/%02d %02d:%02d:%02d' % time.gmtime(epoch)[0:6]
+
+def Checksum8(data):
+    return sum(map(ord, data))
+
+def Checksum8LSB(data):
+    dMetasploitConstants = {
+        92: 'Possible Windows/Native Client', #URI_CHECKSUM_INITW / CS x86',
+        93: 'Possible CS x64',
+        80: 'Possible Python Client', #URI_CHECKSUM_INITP',
+        88: 'Possible Java Client', #URI_CHECKSUM_INITJ',
+        98: 'Possible Exisiting Session', #URI_CHECKSUM_CONN',
+        95: 'Possible New Stageless Session', #URI_CHECKSUM_INIT_CONN',
+    }
+    
+    value = Checksum8(data) % 0x100
+    return (value, dMetasploitConstants.get(value, ''))
+
 def oREurluuid():
     if len(sys.argv) != 2:
         print("Usage python metatool.py [uri]")
         sys.exit(1)
     infile = sys.stdin
+    #with open("input.csv", "r") as f:
+        #infile=f.readlines()
     outfile = sys.stdout
     r = csv.DictReader(infile)
     w = csv.DictWriter(outfile, fieldnames=r.fieldnames)
     w.writeheader()
     for result in r:
-        oSearch = oREurluuid.search(result['combined_uri'])
+        oSearch = URL_RE.search(result['combined_uri'])
         if oSearch != None:
             if len(oSearch.groups()[0]) >= 22:
                 try:
@@ -98,11 +166,11 @@ def oREurluuid():
                 puid, xor1, xor2, platform_xored, architecture_xored, ts1_xored, ts2_xored, ts3_xored, ts4_xored = struct.unpack(format, decoded)
                 platform = platform_xored ^ xor1
                 platformName = dPlatforms.get(platform, UNDEFINED)
-                if platformName == UNDEFINED and not options.force:
+                if platformName == UNDEFINED:
                     continue
                 architecture = architecture_xored ^ xor2
                 architectureName = dArchitectures.get(architecture, UNDEFINED)
-                if architectureName == UNDEFINED and not options.force:
+                if architectureName == UNDEFINED :
                     continue
                 timestamp = struct.unpack('>I', bytes([ts1_xored ^ xor1, ts2_xored ^ xor2, ts3_xored ^ xor1, ts4_xored ^ xor2]))[0]
                 result['puid'] = ('%s (%s)' % (binascii.b2a_hex(puid), repr(puid)))
@@ -110,38 +178,15 @@ def oREurluuid():
                 result['architecture'] = ('%d (%s)' % (architecture, architectureName))
                 result['timestamp' ] = ('%s' % (FormatTime(timestamp)))
             else:
-                result['puid'] = 'bad puid'
-                result['platform'] = 'bad platform'
-                result['architecture'] = 'bad architecture'
-                result['timestamp'] = 'bad timestamp'
+                # result['puid'] = ' '
+                # result['platform'] = ''
+                # result['architecture'] = ''
+                # result['timestamp'] = ''
+                pass
             w.writerow(result)
         else:
             w.writerow(result)
         
-        
-
-def metatool():
-    if len(sys.argv) != 2:
-        print("Usage pythin metatool.py [uri]")
-        sys.exit(1)
-    infile = sys.stdin
-    outfile = sys.stdout
-    r = csv.DictReader(infile)
-    w = csv.DictWriter(outfile, fieldnames=r.fieldnames)
-    w.writeheader()
-    for result in r:
-        oSearch = URL_RE.search(result['combined_uri'])
-        if oSearch != None:
-            path = oSearch.groups()[0]
-            checksumValue, checksumConstant = Checksum8LSB(path)
-            if checksumConstant != '':
-                result['parsedcheck'] = f'{checksumConstant}'
-            else:
-                result['parsedcheck'] = 'checksum not found'
-        else:
-            result['parsedcheck'] = 'not evaluated'
-        w.writerow(result)
-
 
 if __name__ == '__main__':
     oREurluuid()
