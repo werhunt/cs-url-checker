@@ -76,7 +76,7 @@ dPlatforms = {
   }
 
 def oREurluuid():
-        if len(sys.argv) != 2:
+    if len(sys.argv) != 2:
         print("Usage python metatool.py [uri]")
         sys.exit(1)
     infile = sys.stdin
@@ -85,7 +85,7 @@ def oREurluuid():
     w = csv.DictWriter(outfile, fieldnames=r.fieldnames)
     w.writeheader()
     for result in r:
-    oSearch = oREurluuid.search(result['combined_uri'])
+        oSearch = oREurluuid.search(result['combined_uri'])
         if oSearch != None:
             if len(oSearch.groups()[0]) >= 22:
                 try:
@@ -115,6 +115,10 @@ def oREurluuid():
                 result['architecture'] = 'bad architecture'
                 result['timestamp'] = 'bad timestamp'
             w.writerow(result)
+        else:
+            w.writerow(result)
+        
+        
 
 def metatool():
     if len(sys.argv) != 2:
