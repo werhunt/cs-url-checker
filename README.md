@@ -18,18 +18,33 @@ The python scripts are added to Splunk as an external lookup.
 
 ## Define the External Lookups in Splunk ##
 
+Copy the two python scripts into the `bin` directory for an application or globally.
+
 The python scripts should be added to Splunk as external lookups. This can be accomplished by added the following code to `transforms.conf` within an application or globally.
 
 ```conf
-[cscheck]
+[url8-check]
 allow_caching = 0
 case_sensitive_match = 1
-external_cmd = url8_check.py combined_uri
+external_cmd = url8-check.py combined_uri
 fields_list = combined_uri, parsedcheck
 
-[urluuid]
+[urluuid-check]
 allow_caching = 0
 case_sensitive_match = 1
 external_cmd = urluuid_check.py combined_uri
-fields_list = combined_uri, puid, platform, architecture, timestamp
+fields_list = combined-uri, puid, platform, architecture, timestamp
+```
+----
+## Search within Splunk ##
+The scripts expect that the full URL begining with `http://` is passed as `combined_uri`.  When working with **Zeek** logs the host header and uri needed to be combined before the lookup.  The following is an example:
+
+```spl
+index=zeek_http uri=*
+| spath host 
+| eval c_uri = "http://" + host + uri 
+| rename c_uri as combined_uri
+| lookup urluuid-check combined_uri
+| search platform="*"
+| table combined_uri puid platform architecture timestamp
 ```
