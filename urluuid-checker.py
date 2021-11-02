@@ -174,8 +174,8 @@ def oREurluuid():
                     continue
                 timestamp = struct.unpack('>I', bytes([ts1_xored ^ xor1, ts2_xored ^ xor2, ts3_xored ^ xor1, ts4_xored ^ xor2]))[0]
                 result['puid'] = ('%s (%s)' % (binascii.b2a_hex(puid), repr(puid)))
-                result['platform'] = ('%d (%s)' % (platform, platformName))
-                result['architecture'] = ('%d (%s)' % (architecture, architectureName))
+                result['platform'] = ('%s' % (platformName))
+                result['architecture'] = ('%s' % (architectureName))
                 result['timestamp' ] = ('%s' % (FormatTime(timestamp)))
             else:
                 # result['puid'] = ' '
